@@ -20,7 +20,6 @@ def read_shapefile(filename):
     
     '''
     import ogr
-    import osr
     driver = ogr.GetDriverByName('ESRI Shapefile')
     data_source = driver.Open(filename, 0)
     layer = data_source.GetLayer(0)
@@ -28,19 +27,15 @@ def read_shapefile(filename):
     cnt = layer.GetFeatureCount()
     x = []
     y = []
-    names = []
     for pt in range(0, cnt):
         feature = layer.GetFeature(pt)
-        try:
-            name = feature.name
-        except:
-            name = str(pt)
         geometry = feature.GetGeometryRef()
-        x.append(geometry.GetX())
-        y.append(geometry.GetY())
-        names.append(name)
+        points = geometry.GetPoints()
+        for point in points:
+            x.append(point[0])
+            y.append(point[1])
 
-    return np.asarray(y), np.asarray(x), np.array(names, 'O')
+    return np.asarray(y), np.asarray(x)
 
 
 # Set up the option parser
@@ -55,7 +50,8 @@ args = options.FILE
 filename = args[0]
 outfilename = args[1]
 
-y, x, name = read_shapefile(filename)
+y, x = read_shapefile(filename)
 data = np.vstack((y, x))
 header = '# EPSG:3021\n# y (northing, m), x (easting, m)'
 np.savetxt(outfilename, data.transpose(), delimiter=",", header=header)
+
